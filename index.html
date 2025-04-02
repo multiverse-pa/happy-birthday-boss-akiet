@@ -1,1 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Boss Akiet: Cake Catcher!</title>
+    <style>
+        /* Basic Reset & Body Styling */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            color: #333;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Game Container */
+        #game-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            width: 90%;
+            max-width: 700px;
+            position: relative;
+            z-index: 10;
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        }
+
+        /* Screen Visibility */
+        .hidden {
+            display: none;
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        .visible {
+            display: block;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Headings and Text */
+        h1 {
+            color: #ff6347; /* Tomato Red */
+            margin-bottom: 5px; /* Reduced margin */
+            font-size: 2.0em; /* Slightly smaller H1 */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        h2.game-title { /* Specific class for the game title */
+             color: #4682b4; /* Steel Blue */
+             margin-bottom: 15px;
+             font-size: 1.5em; /* Adjusted size */
+        }
+
+        h2 { /* General H2 for End Screen */
+             color: #4682b4;
+             margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.1em;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        /* Buttons */
+        button {
+            background-color: #ffcc00;
+            color: #444;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            margin: 10px 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background-color: #ffb700;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Settings */
+        #settings {
+            margin: 20px 0;
+        }
+        #settings label {
+            margin-right: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        #settings select {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 2px solid #8fd3f4;
+            font-size: 1em;
+            background-color: #fff;
+        }
+
+        /* Game Screen Elements */
+        #game-screen {
+            position: relative;
+        }
+
+        #game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+         #score-display { color: #ff6347; }
+         #timer-display { color: #4682b4; }
+
+        #play-area {
+            width: 100%;
+            height: 400px;
+            background-color: rgba(135, 206, 250, 0.1);
+            border: 2px dashed #84fab0;
+            border-radius: 15px;
+            margin: 15px auto;
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        /* Falling Items */
+        .item {
+            position: absolute;
+            font-size: 3.2em; /* Adjust emoji size if needed */
+            user-select: none;
+            cursor: pointer;
+            will-change: transform, opacity; /* Hint browser for performance */
+            /* Initial position set by JS */
+             /* Transition applied by JS for falling */
+             transition: transform 0.1s ease-out, opacity 0.1s ease-out; /* For click feedback */
+        }
+
+        .item:hover {
+             /* Keep hover simple to avoid interfering with fall */
+             filter: brightness(1.1);
+        }
+
+        .item.clicked {
+            /* Explicitly override fall transition for click */
+            transition: transform 0.2s ease-in, opacity 0.2s ease-in !important;
+            transform: scale(1.8) rotate(30deg) !important; /* Ensure click transform wins */
+            opacity: 0 !important;
+        }
+
+        /* Score Popup Animation */
+        .score-popup {
+            position: absolute;
+            font-size: 1.8em;
+            font-weight: bold;
+            user-select: none;
+            pointer-events: none;
+            animation: fadeUp 0.8s ease-out forwards;
+            z-index: 20;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .score-popup.plus { color: #28a745; }
+        .score-popup.minus { color: #dc3545; }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(0.8);
+            }
+        }
+
+        /* End Screen */
+        #final-score {
+             font-size: 1.8em;
+             font-weight: bold;
+             color: #ff6347;
+             margin-bottom: 20px;
+        }
+
+        /* Confetti Animation (No changes needed here) */
+        #confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 15px;
+            background-color: red;
+            opacity: 0.9;
+            animation: confettiFall 5s linear forwards;
+            border-radius: 5px;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-10vh) rotateZ(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotateZ(720deg); opacity: 0; }
+        }
+
+         /* Responsive Adjustments */
+         @media (max-width: 600px) {
+            h1 { font-size: 1.6em; }
+            h2.game-title { font-size: 1.3em; }
+            #game-container { padding: 15px 20px; }
+            #play-area { height: 350px; }
+            .item { font-size: 2.6em; }
+            #game-info { font-size: 1.1em; }
+            button { font-size: 1em; padding: 10px 20px; }
+            p { font-size: 1em; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="confetti-container"></div>
+
+    <div id="game-container">
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="visible">
+            <h1>Happy Birthday Boss Akiet!</h1>
+            <!-- Updated Title -->
+            <h2 class="game-title">Let's catch as many cakes as we can for Boss Akiet!</h2>
+            <p>Click the Cakes 🎂! Avoid the Broccoli 🥦, Chili 🌶️, and Bombs 💣!</p>
+
+            <div id="settings">
+                <label for="difficulty">Speed:</label> <!-- Renamed for clarity -->
+                <select id="difficulty">
+                    <option value="easy">Gentle Drift</option>
+                    <option value="medium" selected>Wobbly Fall</option>
+                    <option value="hard">Fast & Furious!</option>
+                </select>
+            </div>
+
+            <button id="start-button">Start Catching!</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            <div id="game-info">
+                <span id="score-display">Score: 0</span>
+                <span id="timer-display">Time: 20</span>
+            </div>
+            <div id="play-area">
+                <!-- Falling items will appear here -->
+            </div>
+             <!-- Optional Pause Button could go here -->
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="hidden">
+            <h2>Time's Up!</h2>
+             <p id="final-score">Your Final Score: 0</p>
+            <p>Awesome catching! Happy Birthday again, Boss Akiet!</p>
+            <button id="play-again-button">Play Again?</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const playAgainButton = document.getElementById('play-again-button');
+        const difficultySelect = document.getElementById('difficulty');
+        const scoreDisplay = document.getElementById('score-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const playArea = document.getElementById('play-area');
+        const finalScoreText = document.getElementById('final-score');
+        const confettiContainer = document.getElementById('confetti-container');
+
+        // --- Game Settings ---
+        const GAME_DURATION = 20; // *** Reduced game time ***
+        const ITEM_TYPES = { // *** Define items, their type, and score ***
+            cake:     { emoji: '🎂', type: 'good', score: 1 },
+            broccoli: { emoji: '🥦', type: 'bad',  score: -1 },
+            chili:    { emoji: '🌶️', type: 'bad',  score: -2 },
+            bomb:     { emoji: '💣', type: 'bad',  score: -3 }
+        };
+        // Probability weights for spawning items
+        const SPAWN_WEIGHTS = [
+            { itemKey: 'cake', weight: 6 },     // Higher weight = more likely
+            { itemKey: 'broccoli', weight: 2 },
+            { itemKey: 'chili', weight: 1 },
+            { itemKey: 'bomb', weight: 1 }
+        ];
+        const totalSpawnWeight = SPAWN_WEIGHTS.reduce((sum, item) => sum + item.weight, 0);
+
+        const difficultySettings = {
+            easy:   { spawnInterval: 1000, fallDurationMin: 5, fallDurationMax: 7, horizontalDrift: 50 }, // Slower, less drift
+            medium: { spawnInterval: 700,  fallDurationMin: 3.5, fallDurationMax: 5, horizontalDrift: 100 },// Faster spawn/fall, moderate drift
+            hard:   { spawnInterval: 450,  fallDurationMin: 2.5, fallDurationMax: 4, horizontalDrift: 150 } // Fastest, most drift
+        };
+
+        // --- Game State Variables ---
+        let score = 0;
+        let timeLeft = GAME_DURATION;
+        let gameTimerInterval = null;
+        let itemSpawnerInterval = null;
+        let currentDifficulty = 'medium';
+        let gameActive = false;
+        let activeItems = new Map();
+
+        // --- Utility Functions ---
+        function switchScreen(hideScreen, showScreen) {
+             hideScreen.classList.remove('visible');
+             hideScreen.classList.add('hidden');
+             setTimeout(() => {
+                 hideScreen.style.display = 'none';
+                 showScreen.style.display = 'block';
+                 void showScreen.offsetWidth; // Force reflow
+                 showScreen.classList.remove('hidden');
+                 showScreen.classList.add('visible');
+             }, 500);
+        }
+
+        function getRandom(min, max) { // Can return float
+            return Math.random() * (max - min) + min;
+        }
+        function getRandomInt(min, max) { // Returns integer
+             return Math.floor(Math.random() * (max - min + 1)) + min;
+         }
+
+        function selectRandomItemKey() {
+             let randomWeight = Math.random() * totalSpawnWeight;
+             for (const item of SPAWN_WEIGHTS) {
+                 randomWeight -= item.weight;
+                 if (randomWeight <= 0) {
+                     return item.itemKey;
+                 }
+             }
+             return SPAWN_WEIGHTS[0].itemKey; // Fallback
+         }
+
+        // --- Game Logic Functions ---
+        function startGame() {
+            score = 0;
+            timeLeft = GAME_DURATION; // Use constant
+            currentDifficulty = difficultySelect.value;
+            gameActive = true;
+            activeItems.clear();
+            playArea.innerHTML = '';
+            confettiContainer.innerHTML = '';
+
+            updateDisplay();
+            switchScreen(startScreen, gameScreen);
+            startTimer();
+            startSpawning();
+        }
+
+        function startTimer() {
+            clearInterval(gameTimerInterval);
+            timerDisplay.textContent = `Time: ${timeLeft}`; // Initial display
+            gameTimerInterval = setInterval(() => {
+                if (!gameActive) return; // Prevent timer running if paused/ended prematurely
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function startSpawning() {
+            clearInterval(itemSpawnerInterval);
+            const settings = difficultySettings[currentDifficulty];
+            itemSpawnerInterval = setInterval(createItem, settings.spawnInterval);
+        }
+
+        function createItem() {
+            if (!gameActive) return;
+
+            const itemKey = selectRandomItemKey(); // Get a weighted random item key
+            const itemData = ITEM_TYPES[itemKey];
+            const settings = difficultySettings[currentDifficulty];
+
+            const item = document.createElement('div');
+            item.classList.add('item');
+            item.textContent = itemData.emoji;
+            item.dataset.itemKey = itemKey; // Store key for scoring
+
+            // Calculate dynamic properties
+            const playAreaWidth = playArea.offsetWidth;
+            const playAreaHeight = playArea.offsetHeight;
+            const itemSize = parseInt(window.getComputedStyle(item).fontSize) || 40; // Default size fallback
+            const fallDuration = getRandom(settings.fallDurationMin, settings.fallDurationMax);
+
+            // Initial horizontal position (slightly inset)
+            const startX = getRandom(itemSize / 2, playAreaWidth - itemSize * 1.5);
+
+            // *** Calculate ending horizontal position for drift ***
+            const maxDrift = Math.min(settings.horizontalDrift, playAreaWidth / 3); // Limit drift
+            let endX = startX + getRandom(-maxDrift, maxDrift);
+             // Keep item within bounds at the end
+             endX = Math.max(itemSize / 2, Math.min(endX, playAreaWidth - itemSize * 1.5));
+
+            // Set initial style (off-screen top, starting X)
+            item.style.left = `${startX}px`;
+            item.style.top = `-${itemSize * 1.5}px`; // Start further above screen
+            item.style.transform = `translate(0, 0) rotate(${getRandom(-15, 15)}deg)`; // Initial small rotation
+
+            // Assign unique ID
+            const itemId = `item-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            item.id = itemId;
+
+            // Add to play area *before* triggering animation
+            playArea.appendChild(item);
+
+            // Apply falling animation using CSS transition
+            // We trigger reflow before setting the end state to ensure transition happens
+            void item.offsetWidth; // Force browser reflow
+
+            item.style.transition = `transform ${fallDuration}s linear`; // Set transition duration
+            // Set final transform state (end Y just below view, end X for drift, random rotation)
+            item.style.transform = `translate(${endX - startX}px, ${playAreaHeight + itemSize * 2}px) rotate(${getRandom(-90, 90)}deg)`;
+
+
+            // Click handler
+            item.addEventListener('click', handleItemClick);
+
+            // Schedule removal slightly after transition ends
+            const removalTimeout = setTimeout(() => {
+                if (activeItems.has(itemId)) { // Check if not clicked
+                    item.remove();
+                    activeItems.delete(itemId);
+                 }
+            }, fallDuration * 1000 + 150); // Buffer
+
+            // Track item
+             activeItems.set(itemId, { element: item, timeoutId: removalTimeout });
+        }
+
+
+        function handleItemClick(event) {
+            if (!gameActive) return;
+
+            const item = event.target.closest('.item'); // Handle clicks on emoji text too
+             if (!item || !item.id) return; // Ensure we got a valid item element
+
+            const itemId = item.id;
+
+            if (!activeItems.has(itemId)) return; // Already clicked or removed
+
+            const itemInfo = activeItems.get(itemId);
+            clearTimeout(itemInfo.timeoutId); // Clear removal timeout
+            activeItems.delete(itemId); // Stop tracking
+
+            const itemKey = item.dataset.itemKey;
+            const itemData = ITEM_TYPES[itemKey];
+            const scoreChange = itemData.score;
+
+            score += scoreChange;
+
+            updateDisplay();
+            showScorePopup(item, scoreChange);
+
+            // Visual feedback for click
+             item.classList.add('clicked');
+
+            // Remove listener and element after click animation
+            item.removeEventListener('click', handleItemClick);
+            setTimeout(() => {
+                if(item.parentElement) item.remove();
+            }, 200); // Match .clicked transition duration
+        }
+
+        function showScorePopup(element, scoreChange) {
+            const popup = document.createElement('div');
+            popup.classList.add('score-popup');
+            const text = scoreChange > 0 ? `+${scoreChange}` : `${scoreChange}`; // Show sign correctly
+            popup.textContent = text;
+            popup.classList.add(scoreChange > 0 ? 'plus' : 'minus');
+
+            // Position near the clicked item (use element's current computed position)
+            const rect = element.getBoundingClientRect();
+            const gameRect = playArea.getBoundingClientRect();
+            const top = rect.top - gameRect.top + (rect.height / 2);
+            const left = rect.left - gameRect.left + (rect.width / 2);
+
+            popup.style.position = 'absolute';
+            popup.style.top = `${top}px`;
+            popup.style.left = `${left}px`;
+            popup.style.transform = 'translate(-50%, -50%)'; // Center popup
+
+            playArea.appendChild(popup);
+
+            setTimeout(() => { if (popup.parentElement) popup.remove(); }, 800);
+        }
+
+        function updateDisplay() {
+            scoreDisplay.textContent = `Score: ${score}`;
+            timerDisplay.textContent = `Time: ${timeLeft}`;
+        }
+
+        function endGame() {
+            if (!gameActive) return; // Prevent double calls
+            gameActive = false;
+            clearInterval(gameTimerInterval);
+            clearInterval(itemSpawnerInterval);
+
+             // Clear remaining item timeouts and remove items cleanly
+             activeItems.forEach(itemInfo => {
+                 clearTimeout(itemInfo.timeoutId);
+                  // Optionally add a quick fade-out animation before removing
+                  if (itemInfo.element && itemInfo.element.parentElement) {
+                      itemInfo.element.style.transition = 'opacity 0.2s ease-out';
+                      itemInfo.element.style.opacity = '0';
+                      setTimeout(() => itemInfo.element.remove(), 200);
+                  }
+             });
+             activeItems.clear();
+
+            finalScoreText.textContent = `Your Final Score: ${score}!`;
+            switchScreen(gameScreen, endScreen);
+            triggerCelebrationConfetti();
+        }
+
+        function playAgain() {
+            switchScreen(endScreen, startScreen);
+        }
+
+
+        // --- Confetti Functions --- (Unchanged)
+        function createConfetti(count = 80) {
+            const colors = ['#f6d365', '#fda085', '#ff6347', '#28a745', '#5bc0de', '#ffcc00', '#ffffff', '#84fab0', '#8fd3f4'];
+            for (let i = 0; i < count; i++) {
+                const piece = document.createElement('div');
+                piece.classList.add('confetti-piece');
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.left = `${Math.random() * window.innerWidth}px`;
+                piece.style.top = `${-20 + Math.random() * -50}px`;
+                const animDuration = getRandom(4, 7);
+                const animDelay = getRandom(0, 2);
+                piece.style.width = `${getRandom(6, 14)}px`;
+                piece.style.height = `${getRandom(8, 18)}px`;
+                piece.style.transform = `rotateZ(${getRandom(0, 360)}deg)`;
+                const drift = getRandom(-75, 75);
+                const fallRotate = getRandom(360, 1080);
+                piece.animate([
+                    { transform: `translateY(-10vh) rotateZ(${getRandom(0, 360)}deg)`, opacity: 1 },
+                    { transform: `translate(${drift}px, 110vh) rotateZ(${fallRotate}deg)`, opacity: 0 }
+                ], { duration: (animDuration + animDelay) * 1000, easing: 'linear', fill: 'forwards' });
+                confettiContainer.appendChild(piece);
+                setTimeout(() => { if(piece.parentElement) piece.remove(); }, (animDuration + animDelay) * 1000 + 500);
+            }
+        }
+        function triggerCelebrationConfetti() { createConfetti(150); }
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', startGame);
+        playAgainButton.addEventListener('click', playAgain);
+
+        // --- Initial Setup ---
+        startScreen.classList.add('visible'); startScreen.style.display = 'block';
+        gameScreen.classList.add('hidden'); gameScreen.style.display = 'none';
+        endScreen.classList.add('hidden'); endScreen.style.display = 'none';
+
+    </script>
+
+</body>
+</html>
